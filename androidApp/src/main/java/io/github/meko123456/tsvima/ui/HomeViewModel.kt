@@ -5,9 +5,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import io.github.meko123456.tsvima.data.GeocodingClient
 import io.github.meko123456.tsvima.data.GoOutScore
 import io.github.meko123456.tsvima.data.HourlyPoint
 import io.github.meko123456.tsvima.data.OpenMeteoClient
+import io.github.meko123456.tsvima.data.Place
 import io.github.meko123456.tsvima.data.Upcoming
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -33,6 +35,7 @@ sealed interface HomeUi {
 /** Loads a forecast for a lat/lon and derives the score, next-rain line, and hourly rows. */
 class HomeViewModel(
     private val client: OpenMeteoClient = OpenMeteoClient(),
+    private val geocoder: GeocodingClient = GeocodingClient(),
 ) : ViewModel() {
 
     private val _state = MutableStateFlow<HomeUi>(HomeUi.Loading)
@@ -42,8 +45,32 @@ class HomeViewModel(
     var refreshing by mutableStateOf(false)
         private set
 
+    /** City-search state for the place picker. */
+    var searching by mutableStateOf(false)
+        private set
+    var searchResults by mutableStateOf<List<Place>>(emptyList())
+        private set
+
     private var last: Triple<Double, Double, String>? = null
     private val hourFmt = DateTimeFormatter.ofPattern("HH:mm")
+
+    fun search(query: String) {
+        if (query.isBlank()) return
+        viewModelScope.launch {
+            searching = true
+            searchResults = geocoder.search(query).getOrDefault(emptyList())
+            searching = false
+        }
+    }
+
+    fun clearSearch() {
+        searchResults = emptyList()
+    }
+
+    fun pickPlace(place: Place) {
+        clearSearch()
+        load(place.latitude, place.longitude, place.label)
+    }
 
     fun load(latitude: Double, longitude: Double, place: String) {
         last = Triple(latitude, longitude, place)
