@@ -1,10 +1,9 @@
-package io.github.meko123456.tsvima
+package io.github.meko123456.tsvima.data
 
-import io.github.meko123456.tsvima.data.ForecastParser
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
-import org.junit.Test
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class ForecastParserTest {
 

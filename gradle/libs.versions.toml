@@ -5,7 +5,7 @@ composeBom = "2026.06.01"
 activityCompose = "1.13.0"
 lifecycle = "2.10.0"
 okhttp = "4.12.0"
-kotlinxSerialization = "1.8.0"
+kotlinxSerialization = "1.9.0"
 junit = "4.13.2"
 
 [libraries]
@@ -24,5 +24,7 @@ junit = { module = "junit:junit", version.ref = "junit" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
+android-kmp-library = { id = "com.android.kotlin.multiplatform.library", version.ref = "agp" }
+kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }

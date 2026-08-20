@@ -1,10 +1,8 @@
-package io.github.meko123456.tsvima
+package io.github.meko123456.tsvima.data
 
-import io.github.meko123456.tsvima.data.GoOutScore
-import io.github.meko123456.tsvima.data.HourlyPoint
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
-import org.junit.Test
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class GoOutScoreTest {
 
@@ -20,13 +18,13 @@ class GoOutScoreTest {
     @Test
     fun heavyRainScoresLow() {
         val s = GoOutScore.score(List(3) { hour(90, 2.0, 15.0, 8.0) })
-        assertTrue("expected low score, got $s", s < 40)
+        assertTrue(s < 40, "expected low score, got $s")
     }
 
     @Test
     fun coldAndWindyReducesScore() {
         val cold = GoOutScore.score(List(3) { hour(0, 0.0, 2.0, 30.0) })
-        assertTrue("expected penalty, got $cold", cold < 100)
+        assertTrue(cold < 100, "expected penalty, got $cold")
         assertTrue(cold in 40..80)
     }
 

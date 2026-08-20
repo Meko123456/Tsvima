@@ -23,4 +23,4 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "Tsvima"
-include(":app")
+include(":shared", ":androidApp")

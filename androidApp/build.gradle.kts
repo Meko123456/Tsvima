@@ -1,7 +1,6 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.compose.compiler)
-    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
@@ -34,6 +33,8 @@ android {
 }
 
 dependencies {
+    implementation(project(":shared"))
+
     implementation(platform(libs.compose.bom))
     implementation(libs.androidx.activity.compose)
     implementation(libs.compose.ui)
@@ -46,7 +47,6 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.compose)
 
     implementation(libs.okhttp)
-    implementation(libs.kotlinx.serialization.json)
 
     testImplementation(libs.junit)
 }
