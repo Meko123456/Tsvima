@@ -1,5 +1,8 @@
 package io.github.meko123456.tsvima.ui
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.github.meko123456.tsvima.data.GoOutScore
@@ -35,19 +38,37 @@ class HomeViewModel(
     private val _state = MutableStateFlow<HomeUi>(HomeUi.Loading)
     val state: StateFlow<HomeUi> = _state.asStateFlow()
 
+    /** True only during a pull-to-refresh (keeps the current content on screen meanwhile). */
+    var refreshing by mutableStateOf(false)
+        private set
+
+    private var last: Triple<Double, Double, String>? = null
     private val hourFmt = DateTimeFormatter.ofPattern("HH:mm")
 
     fun load(latitude: Double, longitude: Double, place: String) {
+        last = Triple(latitude, longitude, place)
         _state.value = HomeUi.Loading
+        fetch(latitude, longitude, place)
+    }
+
+    /** Re-fetches the last place (pull-to-refresh / retry) without a full-screen spinner. */
+    fun refresh() {
+        val (lat, lon, place) = last ?: return
+        refreshing = true
+        fetch(lat, lon, place) { refreshing = false }
+    }
+
+    private fun fetch(latitude: Double, longitude: Double, place: String, onDone: () -> Unit = {}) {
         viewModelScope.launch {
             client.forecast(latitude, longitude)
                 .onSuccess { forecast ->
                     val upcoming = Upcoming.fromNow(forecast.hourly, LocalDateTime.now())
                     val window = upcoming.take(12)
+                    val score = GoOutScore.score(upcoming)
                     _state.value = HomeUi.Ready(
                         place = place,
-                        score = GoOutScore.score(upcoming),
-                        verdict = GoOutScore.verdict(GoOutScore.score(upcoming)),
+                        score = score,
+                        verdict = GoOutScore.verdict(score),
                         nextRain = nextRainLine(upcoming),
                         hours = window.map {
                             HourRow(label = label(it.time), prob = it.precipProbability, mm = it.precipMm, tempC = it.tempC)
@@ -55,6 +76,7 @@ class HomeViewModel(
                     )
                 }
                 .onFailure { _state.value = HomeUi.Error(it.message ?: "Couldn't load the forecast") }
+            onDone()
         }
     }
 

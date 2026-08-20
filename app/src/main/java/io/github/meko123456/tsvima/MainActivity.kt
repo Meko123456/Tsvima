@@ -51,7 +51,13 @@ class MainActivity : ComponentActivity() {
                 }
 
                 Scaffold { padding ->
-                    HomeScreen(state, Modifier.padding(padding))
+                    HomeScreen(
+                        state = state,
+                        refreshing = vm.refreshing,
+                        onRefresh = vm::refresh,
+                        onRetry = vm::refresh,
+                        modifier = Modifier.padding(padding),
+                    )
                 }
             }
         }
