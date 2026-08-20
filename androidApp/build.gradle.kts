@@ -47,6 +47,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.compose)
 
     implementation(libs.okhttp)
+    implementation(libs.androidx.datastore.preferences)
 
     testImplementation(libs.junit)
 }

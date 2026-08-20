@@ -68,6 +68,19 @@ private fun Ready(state: HomeUi.Ready, modifier: Modifier) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
+        if (state.stale) {
+            Surface(
+                color = MaterialTheme.colorScheme.tertiaryContainer,
+                shape = RoundedCornerShape(8.dp),
+            ) {
+                Text(
+                    "Offline · showing last update" + (state.asOf?.let { " from $it" } ?: ""),
+                    style = MaterialTheme.typography.labelMedium,
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                )
+            }
+        }
+
         Text(state.place, style = MaterialTheme.typography.titleMedium)
 
         Text(

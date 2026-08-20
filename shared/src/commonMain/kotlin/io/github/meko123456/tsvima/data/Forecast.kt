@@ -1,6 +1,9 @@
 package io.github.meko123456.tsvima.data
 
+import kotlinx.serialization.Serializable
+
 /** One hour of forecast, in the location's local time. */
+@Serializable
 data class HourlyPoint(
     val time: String,            // ISO local, e.g. "2026-08-20T14:00"
     val precipProbability: Int,  // percent, 0..100
@@ -10,6 +13,7 @@ data class HourlyPoint(
 )
 
 /** A parsed forecast for one place: its coordinates and an hourly timeline. */
+@Serializable
 data class Forecast(
     val latitude: Double,
     val longitude: Double,
