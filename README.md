@@ -4,38 +4,60 @@
 for Android.
 
 Not another do-everything weather app. Tsvima answers one question well: **is it
-about to rain, and is right now a good time to head out?** Minute-by-minute
-precipitation for the next few hours, plus a simple "good to go out" score.
+about to rain, and is right now a good time to head out?** It shows the next hours of
+precipitation and a simple "go-out" score, from **[Open-Meteo](https://open-meteo.com/)**
+(free, no API key).
 
-## Planned features
+## Screenshots
 
-- 🌦️ **Rain next 3h** — hourly precipitation probability + amount for your location,
-  from **[Open-Meteo](https://open-meteo.com/)** (free, no API key).
-- 🏃 **Go-out score** — a simple 0–100 "good time to be outside / run" score derived
-  from rain, temperature, and wind.
-- 📍 **Location** — device location (coarse) with a manual city fallback; last result
-  cached for offline glances.
-- 🔄 **Home-screen widget** — the next-rain answer at a glance (Glance) *(stretch)*.
+| Home | Find a city | Rain incoming |
+|:---:|:---:|:---:|
+| ![Home](docs/screenshots/1-home.png) | ![Search](docs/screenshots/2-search.png) | ![Rain](docs/screenshots/3-rain.png) |
+
+## Features
+
+- 🏃 **Go-out score** — a 0–100 "good time to be outside / run" score, with a plain-English
+  verdict, derived from imminent rain, temperature, and wind.
+- 🌦️ **Next-rain line** — "Rain likely around 15:00 (~70%)" or "No rain expected in the next 12h".
+- ⏱️ **Hourly timeline** — precipitation chance and temperature for the coming hours.
+- 📍 **Your location** — device coarse location with permission handling, plus a **city search**
+  (Open-Meteo geocoding) when you want a different place.
+- 📴 **Offline glance** — the last forecast is cached (DataStore); open offline and it shows the
+  last result with a clear "offline" hint.
+- 🔄 **Pull-to-refresh** and a friendly error + Retry state.
 - 🎨 **Material 3** — dynamic color, light/dark, edge-to-edge.
 
-## Tech
+## Architecture — Kotlin Multiplatform
 
-Single-module **Jetpack Compose** app on the shared toolchain: Material 3,
-**OkHttp** for the Open-Meteo API, a small pure parser (unit-tested), Kotlin coroutines.
+Structured as a **KMM** project (Android target for now, iOS-ready):
+
+```
+shared/     Kotlin Multiplatform library (commonMain + commonTest)
+            · Open-Meteo forecast + geocoding parsers (kotlinx-serialization)
+            · go-out score, forecast models, cache codec — all pure & unit-tested
+androidApp/ Android app: OkHttp clients, device location, DataStore cache,
+            Compose UI (home, hourly timeline, city-search dialog)
+```
+
+The pure domain lives in `shared/commonMain` with tests in `commonTest`; everything
+platform-specific (networking, location, persistence, UI) stays in `androidApp`.
 
 - Gradle 9.3.1 · AGP 9.1.1 · Kotlin 2.3.21 · Compose BOM 2026.06.01
 - compileSdk 36 · minSdk 26
 
-## Structure
+## Build & run
 
-```
-data/  Open-Meteo client + response parsing + go-out score (pure, testable)
-ui/    Compose home (rain timeline + score), theme
+```bash
+git clone https://github.com/Meko123456/Tsvima.git
+cd Tsvima
+./gradlew :androidApp:assembleDebug     # or open in Android Studio and Run
+./gradlew :shared:testAndroidHostTest   # run the shared unit tests
 ```
 
 ## Status
 
-🚧 Day 1 — README-first. See [issues](../../issues) for the roadmap.
+✅ **v0.1.0** — go-out score, hourly nowcast, device location + city search, and offline
+cache all working. See [issues](../../issues) for what's next (a Glance home-screen widget).
 
 ## License
 
