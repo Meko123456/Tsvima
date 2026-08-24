@@ -48,6 +48,7 @@ dependencies {
 
     implementation(libs.okhttp)
     implementation(libs.androidx.datastore.preferences)
+    implementation(libs.androidx.glance.appwidget)
 
     testImplementation(libs.junit)
 }
