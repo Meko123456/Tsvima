@@ -1,0 +1,10 @@
+# Keep the CI actions current (setup-java, checkout, gradle/actions…). Gradle deps are
+# pinned on purpose to the shared toolchain, so only the Actions ecosystem is tracked.
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "ci"
