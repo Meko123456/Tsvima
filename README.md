@@ -42,7 +42,7 @@ androidApp/ Android app: OkHttp clients, device location, DataStore cache,
 The pure domain lives in `shared/commonMain` with tests in `commonTest`; everything
 platform-specific (networking, location, persistence, UI) stays in `androidApp`.
 
-- Gradle 9.3.1 · AGP 9.1.1 · Kotlin 2.3.21 · Compose BOM 2026.06.01
+- Gradle 9.7.1 · AGP 9.1.1 · Kotlin 2.4.10 · Compose BOM 2026.06.01
 - compileSdk 36 · minSdk 26
 
 ## Build & run
@@ -57,7 +57,7 @@ cd Tsvima
 ## Status
 
 ✅ **v0.1.0** — go-out score, hourly nowcast, device location + city search, and offline
-cache all working. See [issues](../../issues) for what's next (a Glance home-screen widget).
+cache all working — and the Glance home-screen widget that used to be listed here is shipped.
 
 ## License
 
