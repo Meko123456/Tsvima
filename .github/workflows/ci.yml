@@ -25,6 +25,12 @@ jobs:
       - name: Build shared + Android, lint and unit tests
         run: ./gradlew :shared:testAndroidHostTest :androidApp:assembleDebug :androidApp:lintDebug :androidApp:testDebugUnitTest --stacktrace
 
+      # Guards the R8 config and release-only lint. Debug never runs the shrinker, so without this
+      # a keep-rules mistake first appears when somebody builds a release by hand - and
+      # lintVitalRelease is the release-blocking subset of lint, which debug lint does not cover.
+      - name: Release build (R8 + release-blocking lint)
+        run: ./gradlew :androidApp:assembleRelease :androidApp:lintVitalRelease --stacktrace
+
       - name: Upload lint report
         if: failure()
         uses: actions/upload-artifact@v7
