@@ -33,7 +33,12 @@ object ForecastParser {
                 windKmh = h.windSpeed?.getOrNull(i) ?: 0.0,
             )
         }
-        Forecast(latitude = dto.latitude, longitude = dto.longitude, hourly = hourly)
+        Forecast(
+            latitude = dto.latitude,
+            longitude = dto.longitude,
+            hourly = hourly,
+            utcOffsetSeconds = dto.utcOffsetSeconds,
+        )
     }.getOrNull()
 
     @Serializable
@@ -41,6 +46,7 @@ object ForecastParser {
         val latitude: Double = 0.0,
         val longitude: Double = 0.0,
         val hourly: HourlyDto? = null,
+        @SerialName("utc_offset_seconds") val utcOffsetSeconds: Int? = null,
     )
 
     @Serializable

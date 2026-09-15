@@ -54,6 +54,25 @@ class ForecastParserTest {
     }
 
     @Test
+    fun keepsTheLocationsUtcOffset() {
+        // The request asks for timezone=auto, so hourly times come back in the *location's* local
+        // time. This offset is the only thing in the response that says which clock that is.
+        val london = """
+            {"latitude":51.5,"longitude":-0.1,"utc_offset_seconds":3600,
+             "hourly":{"time":["2026-08-20T00:00"]}}
+        """.trimIndent()
+        assertEquals(3600, ForecastParser.parse(london)!!.utcOffsetSeconds)
+    }
+
+    @Test
+    fun absentOffsetStaysNullRatherThanBecomingZero() {
+        // Zero is a real offset (London in winter), so a response without the field must not be
+        // read as UTC. Null means "unknown", which the caller answers with the device's own zone.
+        val minimal = """{"latitude":1,"longitude":2,"hourly":{"time":["2026-08-20T00:00"]}}"""
+        assertNull(ForecastParser.parse(minimal)!!.utcOffsetSeconds)
+    }
+
+    @Test
     fun malformedReturnsNull() {
         assertNull(ForecastParser.parse("not json"))
         assertNull(ForecastParser.parse("{}"))
