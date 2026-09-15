@@ -22,7 +22,9 @@ import io.github.meko123456.tsvima.MainActivity
 import io.github.meko123456.tsvima.data.ForecastCache
 import io.github.meko123456.tsvima.data.GoOutScore
 import io.github.meko123456.tsvima.data.Upcoming
+import java.time.Instant
 import java.time.LocalDateTime
+import java.time.ZoneId
 
 /** Home-screen widget: the last cached go-out score + next-rain line, at a glance. */
 class RainWidget : GlanceAppWidget() {
@@ -32,7 +34,10 @@ class RainWidget : GlanceAppWidget() {
         val scoreText: String
         val rain: String
         if (cached != null) {
-            val upcoming = Upcoming.fromNow(cached.forecast.hourly, LocalDateTime.now())
+            val upcoming = Upcoming.fromNow(
+                cached.forecast.hourly,
+                Upcoming.localNow(cached.forecast.utcOffsetSeconds, Instant.now(), ZoneId.systemDefault()),
+            )
             place = cached.place
             scoreText = GoOutScore.score(upcoming).toString()
             val next = Upcoming.nextRain(upcoming)

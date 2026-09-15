@@ -109,7 +109,10 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     private fun ready(place: String, forecast: Forecast, stale: Boolean, asOf: String?): HomeUi.Ready {
-        val upcoming = Upcoming.fromNow(forecast.hourly, LocalDateTime.now())
+        val upcoming = Upcoming.fromNow(
+            forecast.hourly,
+            Upcoming.localNow(forecast.utcOffsetSeconds, Instant.now(), ZoneId.systemDefault()),
+        )
         val score = GoOutScore.score(upcoming)
         return HomeUi.Ready(
             place = place,
