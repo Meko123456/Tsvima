@@ -43,7 +43,7 @@ The pure domain lives in `shared/commonMain` with tests in `commonTest`; everyth
 platform-specific (networking, location, persistence, UI) stays in `androidApp`.
 
 - Gradle 9.7.1 · AGP 9.1.1 · Kotlin 2.4.10 · Compose BOM 2026.06.01
-- compileSdk 36 · minSdk 26
+- compileSdk 37 · minSdk 26
 
 ## Build & run
 

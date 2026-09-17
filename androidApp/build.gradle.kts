@@ -5,7 +5,7 @@ plugins {
 
 android {
     namespace = "io.github.meko123456.tsvima"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "io.github.meko123456.tsvima"

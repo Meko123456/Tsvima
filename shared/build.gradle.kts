@@ -8,7 +8,7 @@ kotlin {
     // Android is the only target for now; the structure stays iOS-ready.
     androidLibrary {
         namespace = "io.github.meko123456.tsvima.shared"
-        compileSdk = 36
+        compileSdk = 37
         minSdk = 26
         withHostTestBuilder {}
     }
