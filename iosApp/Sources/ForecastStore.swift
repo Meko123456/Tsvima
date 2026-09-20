@@ -67,6 +67,9 @@ final class ForecastStore: ObservableObject {
 
         do {
             let (data, response) = try await session.data(for: request)
+            // The view drives this with `.task(id:)`, so changing place cancels the load in flight
+            // and starts another. Whatever this one came back with belongs to the previous place.
+            guard !Task.isCancelled else { return }
             if let http = response as? HTTPURLResponse, !(200..<300).contains(http.statusCode) {
                 state = .failed("Open-Meteo returned HTTP \(http.statusCode).")
                 return
@@ -92,6 +95,10 @@ final class ForecastStore: ObservableObject {
                 )
             )
         } catch {
+            // Same reason, on the throwing path: a cancelled request reports failure *after* the
+            // new place's load has already set .loading, and would leave an error on screen that
+            // nothing is coming to clear.
+            guard !Task.isCancelled else { return }
             state = .failed(error.localizedDescription)
         }
     }
