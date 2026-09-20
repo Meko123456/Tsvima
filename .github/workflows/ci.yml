@@ -11,6 +11,7 @@ concurrency:
 
 jobs:
   build:
+    # Ubuntu builds the shared Kotlin + Android app; the ios job below covers Kotlin/Native.
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -37,3 +38,28 @@ jobs:
         with:
           name: lint-report
           path: androidApp/build/reports/lint-results-debug.html
+
+  ios:
+    # :shared claimed for months to be "iOS-ready" with Android as its only target, which is a
+    # claim nothing could check - the README called this a KMM project on the strength of it and
+    # had to be corrected. iosArm64 and iosSimulatorArm64 now exist, and this job is what keeps
+    # the claim honest on every branch instead of on whoever remembers to compile it by hand.
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      # Runs the shared tests on a simulator rather than only compiling them. Compiling proves the
+      # code is valid Kotlin/Native; running proves it behaves the same there, which is the whole
+      # reason the parsers, the score and the cache codec live in :shared.
+      - name: Test the shared code on iOS
+        run: |
+          # iosArm64 is what a real iPhone links against. It cannot run tests on a runner, so it
+          # is compiled - a target that is never built is not a target.
+          ./gradlew :shared:iosSimulatorArm64Test :shared:compileKotlinIosArm64 --stacktrace

@@ -5,8 +5,9 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
 /**
- * Pure parser for the Open-Meteo forecast response. Kept free of Android types so it
- * unit-tests on the JVM. Malformed input returns null rather than throwing.
+ * Pure parser for the Open-Meteo forecast response. Kept free of platform types so it
+ * unit-tests on an Android host JVM and on an iOS simulator alike. Malformed input returns
+ * null rather than throwing.
  *
  * Expected shape (hourly arrays are parallel and indexed by `time`):
  * ```

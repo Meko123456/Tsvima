@@ -29,12 +29,16 @@ precipitation and a simple "go-out" score, from **[Open-Meteo](https://open-mete
 
 ## Architecture — Kotlin Multiplatform
 
-Structured as a **KMM** project (Android target for now, iOS-ready):
+Structured as a **KMM** project. `:shared` builds for Android **and** iOS
+(`iosArm64`, `iosSimulatorArm64`), and CI runs its tests on both — the same 19 tests on
+an Android host JVM and on an iOS simulator. The shipping app is Android-only so far;
+the iOS app is separate, still-unwritten work.
 
 ```
 shared/     Kotlin Multiplatform library (commonMain + commonTest)
             · Open-Meteo forecast + geocoding parsers (kotlinx-serialization)
             · go-out score, forecast models, cache codec — all pure & unit-tested
+            · targets: Android, iosArm64, iosSimulatorArm64 (Shared.framework)
 androidApp/ Android app: OkHttp clients, device location, DataStore cache,
             Compose UI (home, hourly timeline, city-search dialog)
 ```
@@ -50,8 +54,9 @@ platform-specific (networking, location, persistence, UI) stays in `androidApp`.
 ```bash
 git clone https://github.com/Meko123456/Tsvima.git
 cd Tsvima
-./gradlew :androidApp:assembleDebug     # or open in Android Studio and Run
-./gradlew :shared:testAndroidHostTest   # run the shared unit tests
+./gradlew :androidApp:assembleDebug       # or open in Android Studio and Run
+./gradlew :shared:testAndroidHostTest     # shared unit tests, Android host JVM
+./gradlew :shared:iosSimulatorArm64Test   # the same tests on an iOS simulator (macOS)
 ```
 
 ## Status
