@@ -5,7 +5,7 @@ plugins {
 }
 
 kotlin {
-    androidLibrary {
+    android {
         namespace = "io.github.meko123456.tsvima.shared"
         compileSdk = 37
         minSdk = 26
