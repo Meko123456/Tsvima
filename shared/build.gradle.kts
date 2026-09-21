@@ -26,6 +26,13 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             implementation(libs.kotlinx.serialization.json)
+            // The second dependency this module has, and it earns its place: the rule for "which
+            // forecast hours are still ahead of us" is calendar arithmetic against the *forecast
+            // location's* clock, and it used to live in androidApp written against java.time —
+            // which meant iOS either had no next-rain line or a second copy of the rule in Swift.
+            // implementation, not api: Upcoming's public surface takes and returns no date type,
+            // so this stays out of both the published API and the iOS framework's headers.
+            implementation(libs.kotlinx.datetime)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))

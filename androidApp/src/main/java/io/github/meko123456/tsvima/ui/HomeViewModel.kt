@@ -59,7 +59,6 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
         private set
 
     private var last: Triple<Double, Double, String>? = null
-    private val hourFmt = DateTimeFormatter.ofPattern("HH:mm")
 
     fun load(latitude: Double, longitude: Double, place: String) {
         last = Triple(latitude, longitude, place)
@@ -109,10 +108,7 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     private fun ready(place: String, forecast: Forecast, stale: Boolean, asOf: String?): HomeUi.Ready {
-        val upcoming = Upcoming.fromNow(
-            forecast.hourly,
-            Upcoming.localNow(forecast.utcOffsetSeconds, Instant.now(), ZoneId.systemDefault()),
-        )
+        val upcoming = Upcoming.hoursAheadNow(forecast.hourly, forecast.utcOffsetSeconds)
         val score = GoOutScore.score(upcoming)
         return HomeUi.Ready(
             place = place,
@@ -120,20 +116,12 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
             verdict = GoOutScore.verdict(score),
             nextRain = nextRainLine(upcoming),
             hours = upcoming.take(12).map {
-                HourRow(label = label(it.time), prob = it.precipProbability, mm = it.precipMm, tempC = it.tempC)
+                HourRow(label = hourLabel(it.time), prob = it.precipProbability, mm = it.precipMm, tempC = it.tempC)
             },
             stale = stale,
             asOf = asOf,
         )
     }
-
-    private fun nextRainLine(upcoming: List<HourlyPoint>): String {
-        val rain = Upcoming.nextRain(upcoming) ?: return "No rain expected in the next 12h ☀️"
-        return "Rain likely around ${label(rain.time)} (~${rain.precipProbability}%)"
-    }
-
-    private fun label(iso: String): String =
-        runCatching { LocalDateTime.parse(iso).format(hourFmt) }.getOrDefault(iso)
 
     private fun clock(epochMs: Long): String =
         Instant.ofEpochMilli(epochMs).atZone(ZoneId.systemDefault()).toLocalDateTime().format(hourFmt)

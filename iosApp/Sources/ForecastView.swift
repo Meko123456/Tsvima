@@ -63,7 +63,28 @@ struct ForecastView: View {
                 }
             }
             .padding(.vertical, 4)
+
+            Label(rainLabel(snapshot), systemImage: snapshot.nextRain == nil ? "sun.max" : "cloud.rain")
+                .font(.subheadline)
+                .foregroundStyle(snapshot.nextRain == nil ? Color.secondary : .blue)
+                .accessibilityIdentifier("nextRain")
         }
+    }
+
+    /// The line this app could not show until `Upcoming` moved into `:shared`.
+    ///
+    /// What counts as rain is `Upcoming.RAIN_PROBABILITY_PERCENT` / `RAIN_MILLIMETRES`, decided in
+    /// Kotlin. Swift only picks the words, which is the one part that genuinely differs per app.
+    private func rainLabel(_ snapshot: ForecastStore.Snapshot) -> String {
+        guard let rain = snapshot.nextRain else {
+            return "No rain in the rest of the forecast"
+        }
+        // The forecast runs two days, so the first wet hour is often tomorrow's. "around 00:00"
+        // read at lunchtime looks like an hour already gone; the timeline rows say "tomorrow" for
+        // the same reason, and this line has no column to say it in.
+        let sameDay = snapshot.upcoming.first.map { $0.time.prefix(10) == rain.time.prefix(10) } ?? true
+        let when = sameDay ? hourLabel(rain.time) : "tomorrow \(hourLabel(rain.time))"
+        return "Rain likely around \(when) (~\(rain.precipProbability)%)"
     }
 
     private func timelineSection(_ snapshot: ForecastStore.Snapshot) -> some View {
@@ -87,7 +108,7 @@ struct ForecastView: View {
             )
             LabeledContent("Hours returned", value: "\(snapshot.forecast.hourly.count)")
             LabeledContent("Location offset", value: offsetLabel(snapshot.forecast.utcOffsetSeconds))
-            Text("Live from api.open-meteo.com, parsed by the shared Kotlin ForecastParser and scored by GoOutScore — the same code the Android app runs.")
+            Text("Live from api.open-meteo.com, parsed by the shared Kotlin ForecastParser, filtered to the location's own clock by Upcoming and scored by GoOutScore — the same code the Android app runs.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
@@ -138,7 +159,9 @@ private struct HourRow: View {
             Text("\(hour.precipProbability)%")
                 .font(.body.monospacedDigit())
                 .frame(width: 50, alignment: .trailing)
-                .foregroundStyle(hour.precipProbability >= 50 ? Color.blue : .secondary)
+                // The shared threshold, not a 50 typed here: the highlight and the "next rain"
+                // line above have to agree about which hours are the wet ones.
+                .foregroundStyle(hour.precipProbability >= Upcoming.shared.RAIN_PROBABILITY_PERCENT ? Color.blue : .secondary)
 
             Text(hour.precipMm > 0 ? String(format: "%.1f mm", hour.precipMm) : "—")
                 .font(.caption.monospacedDigit())

@@ -3,10 +3,10 @@ import Shared
 
 /// Fetches an Open-Meteo forecast and hands it to the shared Kotlin core to make sense of.
 ///
-/// Everything this screen asserts — what the response means, what the next few hours are worth and
-/// what to call that — comes out of `:shared`, and is covered by the same tests that already run on
-/// this simulator's own Kotlin/Native target. Swift does the two jobs that are genuinely the
-/// platform's: it makes the HTTPS request, and it decides which hours count as "upcoming".
+/// Everything this screen asserts — what the response means, which hours are still ahead of you,
+/// what the next few are worth and whether it is about to rain — comes out of `:shared`, and is
+/// covered by the same tests that already run on this simulator's own Kotlin/Native target. Swift
+/// does the one job that is genuinely the platform's: it makes the HTTPS request.
 ///
 /// **This fetches live data.** Open-Meteo is free and key-less, so there is no secret to keep out
 /// of the repo and no excuse for shipping a canned response dressed up as a forecast — a screenshot
@@ -24,6 +24,8 @@ final class ForecastStore: ObservableObject {
         /// `GoOutScore` over the first up-to-3 upcoming hours.
         let score: Int32
         let verdict: String
+        /// First upcoming hour that reads as rain, by the thresholds both apps share.
+        let nextRain: HourlyPoint?
     }
 
     enum State {
@@ -83,7 +85,11 @@ final class ForecastStore: ObservableObject {
                 state = .failed("Unexpected forecast format.")
                 return
             }
-            let upcoming = upcomingHours(of: forecast)
+            // The hour filter is the location's-clock rule, not this device's — see `Upcoming`.
+            let upcoming = Upcoming.shared.hoursAheadNow(
+                hourly: forecast.hourly,
+                utcOffsetSeconds: forecast.utcOffsetSeconds
+            )
             let score = GoOutScore.shared.score(upcoming: upcoming)
             state = .loaded(
                 Snapshot(
@@ -91,7 +97,8 @@ final class ForecastStore: ObservableObject {
                     forecast: forecast,
                     upcoming: upcoming,
                     score: score,
-                    verdict: GoOutScore.shared.verdict(score: score)
+                    verdict: GoOutScore.shared.verdict(score: score),
+                    nextRain: Upcoming.shared.nextRain(upcoming: upcoming)
                 )
             )
         } catch {
@@ -117,32 +124,5 @@ final class ForecastStore: ObservableObject {
             URLQueryItem(name: "timezone", value: "auto"),
         ]
         return components?.url
-    }
-
-    /// The hours at or after the current hour, on the **forecast location's** clock.
-    ///
-    /// `HourlyPoint.time` is stamped in the local time of the place being forecast, because the
-    /// request asks for `timezone=auto`. Comparing those against this device's clock is only right
-    /// while the two share an offset, and a place picker guarantees they often will not: from a
-    /// phone in Tbilisi, London's next few hours would be dropped and the score computed over a
-    /// window that has not started. `utcOffsetSeconds` carries the location's offset; null means a
-    /// forecast from before that field existed, for which the device zone is the right fallback.
-    ///
-    /// This restates a decision `androidApp` makes in `Upcoming.fromNow` — the one piece of domain
-    /// logic that app still keeps to itself, because it is written against `java.time` and cannot
-    /// move to `commonMain` as it stands. Lifting it is the obvious follow-up. Until then this
-    /// screen deliberately shows no "next rain" line: that threshold lives in the same Android-only
-    /// file, and restating a rule in a second language is how two apps start disagreeing.
-    private func upcomingHours(of forecast: Forecast) -> [HourlyPoint] {
-        let zone = forecast.utcOffsetSeconds
-            .flatMap { TimeZone(secondsFromGMT: $0.intValue) } ?? .current
-        let formatter = DateFormatter()
-        // Fixed-format parsing wants a fixed locale, or a user's calendar preference rewrites it.
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.timeZone = zone
-        formatter.dateFormat = "yyyy-MM-dd'T'HH:00"
-        let currentHour = formatter.string(from: Date())
-        // Open-Meteo's stamps are fixed-width ISO local times, so they sort chronologically as text.
-        return forecast.hourly.filter { $0.time >= currentHour }
     }
 }
