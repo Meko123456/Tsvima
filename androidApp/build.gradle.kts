@@ -49,6 +49,11 @@ dependencies {
     implementation(libs.okhttp)
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.androidx.glance.appwidget)
+    // Tsvima schedules nothing itself; Glance runs the widget's sessions on WorkManager and asks
+    // for 2.7.1, which brings Room 2.2.5. Under R8 full mode that Room's keep rules no longer hold
+    // the constructor it reaches for by reflection, so the minified app died in startup creating
+    // WorkDatabase. Asking for a current WorkManager lifts both, and matches the rest of the fleet.
+    implementation(libs.androidx.work.runtime)
 
     testImplementation(libs.junit)
 }
