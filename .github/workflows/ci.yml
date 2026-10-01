@@ -102,3 +102,54 @@ jobs:
           xcodebuild -project Tsvima.xcodeproj -scheme Tsvima \
                      -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
                      -configuration Debug build
+
+  release-launches:
+    # Building the release proves R8 ran, not that the result starts. On 30 September 2026 three
+    # apps in this collection turned out to have minified builds that died before their first frame
+    # (R8 full mode had stripped a constructor a library reaches for by reflection), and every check
+    # was green. This app was one of them (6ddd942). This installs the R8 build on an emulator,
+    # opens it, and fails if it crashes or is not running fifteen seconds later. Proven both ways in
+    # Nabiji #13.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      # CI has no release key, so the build comes out unsigned. Any key will do for installing it
+      # on a throwaway emulator, so this makes one up.
+      - name: Build the minified release and sign it with a throwaway key
+        run: |
+          ./gradlew :androidApp:assembleRelease --stacktrace
+          keytool -genkeypair -keystore "$RUNNER_TEMP/launch.jks" -storepass launchcheck \
+            -keypass launchcheck -alias launch -keyalg RSA -keysize 2048 -validity 1 \
+            -dname "CN=release launch check"
+          BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          "$BT/zipalign" -f -p 4 "$(ls androidApp/build/outputs/apk/release/*.apk | head -1)" "$RUNNER_TEMP/aligned.apk"
+          "$BT/apksigner" sign --ks "$RUNNER_TEMP/launch.jks" --ks-pass pass:launchcheck \
+            --key-pass pass:launchcheck --out "$RUNNER_TEMP/release.apk" "$RUNNER_TEMP/aligned.apk"
+
+      # The emulator wants more disk than ubuntu-latest leaves free, and it needs KVM.
+      - name: Free disk space and enable KVM
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/share/swift /usr/local/.ghcup \
+                      /usr/local/lib/android/sdk/ndk /opt/hostedtoolcache/CodeQL
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Open the release build on an emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          script: bash .github/scripts/launch-release.sh ${{ runner.temp }}/release.apk
