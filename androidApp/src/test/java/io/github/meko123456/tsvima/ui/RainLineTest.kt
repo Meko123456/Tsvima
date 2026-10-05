@@ -32,6 +32,20 @@ class RainLineTest {
     }
 
     @Test
+    fun anHourWetOnlyByItsAmountIsPossibleAndSaysHowMuch() {
+        // Seen on 5 October 2026 for Tbilisi: 0.5 mm forecast at a 0% chance. The amount alone
+        // makes the hour wet, and the line used to call that "Rain likely ... (~0%)".
+        val line = nextRainLine(listOf(hour("2026-10-05T12:00"), hour("2026-10-06T15:00", prob = 0, mm = 0.5)))
+        assertEquals("Rain possible around tomorrow 15:00 (0.5 mm)", line)
+    }
+
+    @Test
+    fun aLikelyHourIsCalledLikelyWhateverItsAmount() {
+        val line = nextRainLine(listOf(hour("2026-10-05T14:00", prob = 80, mm = 3.0)))
+        assertEquals("Rain likely around 14:00 (~80%)", line)
+    }
+
+    @Test
     fun aDryForecastClaimsOnlyTheWindowItChecked() {
         // Not "the next 12h" — that was the timeline's length. nextRain reads every upcoming hour.
         val line = nextRainLine(listOf(hour("2026-09-21T12:00"), hour("2026-09-21T13:00")))
@@ -45,6 +59,8 @@ class RainLineTest {
         val justOver = listOf(hour("2026-09-21T12:00", prob = Upcoming.RAIN_PROBABILITY_PERCENT))
         assertTrue(nextRainLine(justUnder).startsWith("No rain"))
         assertTrue(nextRainLine(justOver).startsWith("Rain likely"))
+        val wetByAmount = listOf(hour("2026-09-21T12:00", prob = 0, mm = Upcoming.RAIN_MILLIMETRES))
+        assertTrue(nextRainLine(wetByAmount).startsWith("Rain possible"))
     }
 
     @Test

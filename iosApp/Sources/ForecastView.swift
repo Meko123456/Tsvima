@@ -84,7 +84,13 @@ struct ForecastView: View {
         // the same reason, and this line has no column to say it in.
         let sameDay = snapshot.upcoming.first.map { $0.time.prefix(10) == rain.time.prefix(10) } ?? true
         let when = sameDay ? hourLabel(rain.time) : "tomorrow \(hourLabel(rain.time))"
-        return "Rain likely around \(when) (~\(rain.precipProbability)%)"
+        // An hour can be wet by its chance of rain or by its amount, which Open-Meteo takes from
+        // different models; they can disagree, as with 0.5 mm at 0%. Cite whichever said so:
+        // "Rain likely" beside "~0%" contradicts itself.
+        if rain.precipProbability >= Upcoming.shared.RAIN_PROBABILITY_PERCENT {
+            return "Rain likely around \(when) (~\(rain.precipProbability)%)"
+        }
+        return "Rain possible around \(when) (\(String(format: "%.1f", rain.precipMm)) mm)"
     }
 
     private func timelineSection(_ snapshot: ForecastStore.Snapshot) -> some View {

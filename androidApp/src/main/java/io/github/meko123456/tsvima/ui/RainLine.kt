@@ -4,6 +4,7 @@ import io.github.meko123456.tsvima.data.HourlyPoint
 import io.github.meko123456.tsvima.data.Upcoming
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 /**
  * The wording around the shared rain rule.
@@ -27,5 +28,13 @@ internal fun nextRainLine(upcoming: List<HourlyPoint>): String {
     // the crossing, this line does not.
     val sameDay = upcoming.firstOrNull()?.time?.take(10) == rain.time.take(10)
     val at = if (sameDay) hourLabel(rain.time) else "tomorrow ${hourLabel(rain.time)}"
-    return "Rain likely around $at (~${rain.precipProbability}%)"
+    // An hour can be wet by either of two forecasts. Open-Meteo's chance of rain and its amount come
+    // from different models and can disagree, as with 0.5 mm at 0% for Tbilisi in October 2026.
+    // Either is enough to call the hour wet, but the line has to cite the one that said so:
+    // "Rain likely" beside "~0%" contradicts itself.
+    return if (rain.precipProbability >= Upcoming.RAIN_PROBABILITY_PERCENT) {
+        "Rain likely around $at (~${rain.precipProbability}%)"
+    } else {
+        "Rain possible around $at (${String.format(Locale.ROOT, "%.1f", rain.precipMm)} mm)"
+    }
 }
