@@ -21,7 +21,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -43,7 +43,7 @@ class MainActivity : ComponentActivity() {
                 val vm: HomeViewModel = viewModel()
                 val state by vm.state.collectAsState()
                 val context = LocalContext.current
-                var showSearch by remember { mutableStateOf(false) }
+                var showSearch by rememberSaveable { mutableStateOf(false) }
 
                 fun loadForDevice() {
                     val coarse = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION)
