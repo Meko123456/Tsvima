@@ -57,6 +57,8 @@ class MainActivity : ComponentActivity() {
                 ) { loadForDevice() }
 
                 LaunchedEffect(Unit) {
+                    // After a rotation, loading here again would swap a picked city back to this one.
+                    if (vm.hasPlace) return@LaunchedEffect
                     val coarse = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION)
                     if (coarse == PackageManager.PERMISSION_GRANTED) loadForDevice()
                     else permissionLauncher.launch(Manifest.permission.ACCESS_COARSE_LOCATION)

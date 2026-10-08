@@ -60,6 +60,9 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
 
     private var last: Triple<Double, Double, String>? = null
 
+    /** True once a place is loaded. Survives a rotation, which the activity does not. */
+    val hasPlace: Boolean get() = last != null
+
     fun load(latitude: Double, longitude: Double, place: String) {
         last = Triple(latitude, longitude, place)
         _state.value = HomeUi.Loading
