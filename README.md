@@ -51,8 +51,8 @@ iosApp/     SwiftUI app: URLSession fetch, the shared parser and score, native U
 The pure domain lives in `shared/commonMain` with tests in `commonTest`; everything
 platform-specific — networking, location, persistence, UI — stays in the app modules.
 
-- Gradle 9.7.1 · AGP 9.1.1 · Kotlin 2.4.10 · Compose BOM 2026.06.01
-- compileSdk 37 · minSdk 26
+- Gradle 9.8.0 · AGP 9.4.1 · Kotlin 2.4.20 · Compose BOM 2026.09.00
+- compileSdk 37 · targetSdk 37 · minSdk 26
 
 ## Build & run
 
