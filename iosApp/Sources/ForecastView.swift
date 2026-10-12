@@ -4,6 +4,7 @@ import Shared
 /// The one question the app answers — is now a good time to head out — and the hours behind it.
 struct ForecastView: View {
     @EnvironmentObject private var store: ForecastStore
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     var body: some View {
         NavigationStack {
@@ -28,12 +29,21 @@ struct ForecastView: View {
 
     private var placeSection: some View {
         Section {
-            Picker("Place", selection: $store.placeIndex) {
-                ForEach(Array(store.places.enumerated()), id: \.offset) { index, place in
-                    Text(place.label).tag(index)
-                }
+            if typeSize.isAccessibilitySize {
+                // A menu picker draws its value in a button of fixed height, so at these sizes a
+                // place that wraps, "Tbilisi, Georgia", lost its second line. This row grows instead.
+                placePicker.pickerStyle(.navigationLink)
+            } else {
+                placePicker.pickerStyle(.menu)
             }
-            .pickerStyle(.menu)
+        }
+    }
+
+    private var placePicker: some View {
+        Picker("Place", selection: $store.placeIndex) {
+            ForEach(Array(store.places.enumerated()), id: \.offset) { index, place in
+                Text(place.label).tag(index)
+            }
         }
     }
 
