@@ -162,7 +162,34 @@ private struct HourRow: View {
     /// The date of the first hour shown, so later rows can say when they cross midnight.
     let firstDay: String
 
+    @Environment(\.dynamicTypeSize) private var typeSize
+
     var body: some View {
+        if typeSize.isAccessibilitySize {
+            // The columns below have fixed widths, and at the accessibility text sizes they broke
+            // every value into pieces: "13 :0 0", "0 %", "2 3 °". Here each hour is three short
+            // lines instead, with words where the columns used to say what a number was.
+            VStack(alignment: .leading, spacing: 4) {
+                Text(isTomorrow ? "\(hourLabel(hour.time)) tomorrow" : hourLabel(hour.time))
+                    .font(.body.monospacedDigit())
+                Text(rainLine)
+                    .foregroundStyle(hour.precipProbability >= Upcoming.shared.RAIN_PROBABILITY_PERCENT ? Color.blue : .secondary)
+                Text(String(format: "%.0f°, wind %.0f km/h", hour.tempC, hour.windKmh))
+                    .foregroundStyle(.secondary)
+            }
+        } else {
+            columns
+        }
+    }
+
+    private var isTomorrow: Bool { String(hour.time.prefix(10)) != firstDay }
+
+    private var rainLine: String {
+        let chance = "\(hour.precipProbability)% chance of rain"
+        return hour.precipMm > 0 ? chance + String(format: ", %.1f mm", hour.precipMm) : chance
+    }
+
+    private var columns: some View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
                 Text(hourLabel(hour.time)).font(.body.monospacedDigit())
