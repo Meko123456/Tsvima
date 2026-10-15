@@ -166,19 +166,28 @@ private struct HourRow: View {
 
     var body: some View {
         if typeSize.isAccessibilitySize {
-            // The columns below have fixed widths, and at the accessibility text sizes they broke
-            // every value into pieces: "13 :0 0", "0 %", "2 3 °". Here each hour is three short
-            // lines instead, with words where the columns used to say what a number was.
-            VStack(alignment: .leading, spacing: 4) {
-                Text(isTomorrow ? "\(hourLabel(hour.time)) tomorrow" : hourLabel(hour.time))
-                    .font(.body.monospacedDigit())
-                Text(rainLine)
-                    .foregroundStyle(hour.precipProbability >= Upcoming.shared.RAIN_PROBABILITY_PERCENT ? Color.blue : .secondary)
-                Text(String(format: "%.0f°, wind %.0f km/h", hour.tempC, hour.windKmh))
-                    .foregroundStyle(.secondary)
-            }
+            lines
         } else {
-            columns
+            // A 12-hour clock makes the time wider, and at the largest standard size the columns
+            // no longer fit: the temperature broke into "1" over "6°". The lines take over then.
+            ViewThatFits(in: .horizontal) {
+                columns
+                lines
+            }
+        }
+    }
+
+    /// The columns below have fixed widths, and at the accessibility text sizes they broke every
+    /// value into pieces: "13 :0 0", "0 %", "2 3 °". Here each hour is three short lines instead,
+    /// with words where the columns used to say what a number was.
+    private var lines: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(isTomorrow ? "\(hourLabel(hour.time)) tomorrow" : hourLabel(hour.time))
+                .font(.body.monospacedDigit())
+            Text(rainLine)
+                .foregroundStyle(hour.precipProbability >= Upcoming.shared.RAIN_PROBABILITY_PERCENT ? Color.blue : .secondary)
+            Text(String(format: "%.0f°, wind %.0f km/h", hour.tempC, hour.windKmh))
+                .foregroundStyle(.secondary)
         }
     }
 
@@ -192,12 +201,21 @@ private struct HourRow: View {
     private var columns: some View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
-                Text(hourLabel(hour.time)).font(.body.monospacedDigit())
+                // As wide as the widest time this clock can show, and never narrower than the 76
+                // points the column always had, so every row lines up. "22:00" fits in 76;
+                // "10:00 PM", on a phone set to a 12-hour clock, does not.
+                ZStack(alignment: .leading) {
+                    Color.clear.frame(width: 76, height: 0)
+                    Text(hourLabel("2026-01-01T10:00")).hidden()
+                    Text(hourLabel("2026-01-01T22:00")).hidden()
+                    Text(hourLabel(hour.time))
+                }
+                .font(.body.monospacedDigit())
                 if String(hour.time.prefix(10)) != firstDay {
                     Text("tomorrow").font(.caption2).foregroundStyle(.secondary)
                 }
             }
-            .frame(width: 76, alignment: .leading)
+            .fixedSize(horizontal: true, vertical: false)
 
             Text("\(hour.precipProbability)%")
                 .font(.body.monospacedDigit())
@@ -222,5 +240,21 @@ private struct HourRow: View {
     }
 }
 
-/// "2026-09-20T14:00" → "14:00". The stamps are fixed-width, so the tail is the clock.
-private func hourLabel(_ isoLocal: String) -> String { String(isoLocal.suffix(5)) }
+/// "2026-09-20T14:00" → "14:00", or "2:00 PM" where the phone keeps a 12-hour clock: the template's
+/// "j" is the hour in whichever cycle the user chose. The stamp is the place's own wall clock, so
+/// it is read and written in UTC, where no zone of this device's can move it. Formatters are made
+/// per call because the setting can change while the app is open.
+private func hourLabel(_ isoLocal: String) -> String {
+    let utc = TimeZone(identifier: "UTC")
+    let parser = DateFormatter()
+    parser.locale = Locale(identifier: "en_US_POSIX")
+    parser.timeZone = utc
+    parser.dateFormat = "yyyy-MM-dd'T'HH:mm"
+    // The stamps are fixed-width, so an unreadable one still ends in the clock.
+    guard let date = parser.date(from: isoLocal) else { return String(isoLocal.suffix(5)) }
+    let clock = DateFormatter()
+    clock.locale = .current
+    clock.timeZone = utc
+    clock.setLocalizedDateFormatFromTemplate("jmm")
+    return clock.string(from: date)
+}

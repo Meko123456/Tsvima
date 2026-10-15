@@ -13,13 +13,18 @@ import java.util.Locale
  * it is the part that is genuinely per-app, so it lives here — out of [HomeViewModel], which needs
  * an `Application` to construct and would drag Robolectric in behind a string.
  */
-internal val hourFmt: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
+/**
+ * "14:00", or "2:00 PM" on a phone set to a 12-hour clock. Built per call: the setting can change
+ * while the app is open, and the AM/PM words belong to the current locale.
+ */
+internal fun hourFormat(is24Hour: Boolean): DateTimeFormatter =
+    DateTimeFormatter.ofPattern(if (is24Hour) "HH:mm" else "h:mm a", Locale.getDefault())
 
-/** "2026-09-21T14:00" → "14:00", or the raw stamp if it will not parse. */
-internal fun hourLabel(iso: String): String =
-    runCatching { LocalDateTime.parse(iso).format(hourFmt) }.getOrDefault(iso)
+/** "2026-09-21T14:00" → "14:00" or "2:00 PM", or the raw stamp if it will not parse. */
+internal fun hourLabel(iso: String, is24Hour: Boolean): String =
+    runCatching { LocalDateTime.parse(iso).format(hourFormat(is24Hour)) }.getOrDefault(iso)
 
-internal fun nextRainLine(upcoming: List<HourlyPoint>): String {
+internal fun nextRainLine(upcoming: List<HourlyPoint>, is24Hour: Boolean): String {
     // "in the next 12h" was the timeline's length, not this line's: nextRain scans every upcoming
     // hour, which is up to two days. Claim the window actually checked.
     val rain = Upcoming.nextRain(upcoming) ?: return "No rain in the rest of the forecast ☀️"
@@ -27,7 +32,7 @@ internal fun nextRainLine(upcoming: List<HourlyPoint>): String {
     // lunchtime looks like an hour already gone — the timeline rows below have a column to mark
     // the crossing, this line does not.
     val sameDay = upcoming.firstOrNull()?.time?.take(10) == rain.time.take(10)
-    val at = if (sameDay) hourLabel(rain.time) else "tomorrow ${hourLabel(rain.time)}"
+    val at = if (sameDay) hourLabel(rain.time, is24Hour) else "tomorrow ${hourLabel(rain.time, is24Hour)}"
     // An hour can be wet by either of two forecasts. Open-Meteo's chance of rain and its amount come
     // from different models and can disagree, as with 0.5 mm at 0% for Tbilisi in October 2026.
     // Either is enough to call the hour wet, but the line has to cite the one that said so:

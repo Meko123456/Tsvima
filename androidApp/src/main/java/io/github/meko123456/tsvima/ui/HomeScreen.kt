@@ -6,7 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -120,10 +120,12 @@ private fun HourCell(h: HourRow) {
     Surface(
         color = MaterialTheme.colorScheme.surfaceVariant,
         shape = RoundedCornerShape(12.dp),
-        modifier = Modifier.width(72.dp),
+        // At least 72dp, the width every hour had. On a 12-hour clock "12:00 PM" at a large text
+        // size needs more, and a fixed width would break it after "12:00".
+        modifier = Modifier.widthIn(min = 72.dp),
     ) {
         Column(
-            Modifier.padding(vertical = 12.dp),
+            Modifier.padding(horizontal = 8.dp, vertical = 12.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {

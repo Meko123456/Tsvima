@@ -1,6 +1,7 @@
 package io.github.meko123456.tsvima.ui
 
 import android.app.Application
+import android.text.format.DateFormat
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -113,13 +114,15 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
     private fun ready(place: String, forecast: Forecast, stale: Boolean, asOf: String?): HomeUi.Ready {
         val upcoming = Upcoming.hoursAheadNow(forecast.hourly, forecast.utcOffsetSeconds)
         val score = GoOutScore.score(upcoming)
+        // The phone's own clock setting, so the hours read the way its status bar does.
+        val is24Hour = DateFormat.is24HourFormat(getApplication())
         return HomeUi.Ready(
             place = place,
             score = score,
             verdict = GoOutScore.verdict(score),
-            nextRain = nextRainLine(upcoming),
+            nextRain = nextRainLine(upcoming, is24Hour),
             hours = upcoming.take(12).map {
-                HourRow(label = hourLabel(it.time), prob = it.precipProbability, mm = it.precipMm, tempC = it.tempC)
+                HourRow(label = hourLabel(it.time, is24Hour), prob = it.precipProbability, mm = it.precipMm, tempC = it.tempC)
             },
             stale = stale,
             asOf = asOf,
@@ -127,5 +130,6 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     private fun clock(epochMs: Long): String =
-        Instant.ofEpochMilli(epochMs).atZone(ZoneId.systemDefault()).toLocalDateTime().format(hourFmt)
+        Instant.ofEpochMilli(epochMs).atZone(ZoneId.systemDefault()).toLocalDateTime()
+            .format(hourFormat(DateFormat.is24HourFormat(getApplication())))
 }
