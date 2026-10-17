@@ -89,6 +89,7 @@ class MainActivity : ComponentActivity() {
                     PlaceSearchDialog(
                         searching = vm.searching,
                         results = vm.searchResults,
+                        message = vm.searchMessage,
                         onSearch = vm::search,
                         onPick = { vm.pickPlace(it); showSearch = false },
                         onDismiss = { showSearch = false },

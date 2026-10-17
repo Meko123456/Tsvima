@@ -21,6 +21,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import io.github.meko123456.tsvima.data.Place
@@ -29,6 +32,7 @@ import io.github.meko123456.tsvima.data.Place
 fun PlaceSearchDialog(
     searching: Boolean,
     results: List<Place>,
+    message: String?,
     onSearch: (String) -> Unit,
     onPick: (Place) -> Unit,
     onDismiss: () -> Unit,
@@ -52,6 +56,14 @@ fun PlaceSearchDialog(
                 )
                 if (searching) {
                     LinearProgressIndicator(Modifier.fillMaxWidth().padding(top = 12.dp))
+                } else if (message != null) {
+                    // Announced by TalkBack too: otherwise a search that finds nothing is silent.
+                    Text(
+                        message,
+                        modifier = Modifier
+                            .padding(top = 12.dp)
+                            .semantics { liveRegion = LiveRegionMode.Polite },
+                    )
                 } else {
                     Column(Modifier.heightIn(max = 240.dp).verticalScroll(rememberScrollState())) {
                         results.forEach { place ->

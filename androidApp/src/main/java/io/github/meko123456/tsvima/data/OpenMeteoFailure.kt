@@ -12,15 +12,24 @@ class HttpStatusException(val code: Int) : IOException("HTTP $code")
 class UnreadableResponseException : IOException("Unexpected response format")
 
 /**
- * Why the forecast couldn't be loaded, in words someone can act on, rather than the exception's
- * own message (offline, the resolver's "Unable to resolve host …").
+ * Why the forecast or a city search failed, in words someone can act on, rather than the
+ * exception's own message (offline, the resolver's "Unable to resolve host …").
  */
 object OpenMeteoFailure {
-    fun forecast(error: Throwable): String = when (error) {
-        is UnknownHostException, is ConnectException, is InterruptedIOException ->
-            "Couldn't reach the forecast. Check the phone is online, then retry."
-        is HttpStatusException -> "The forecast service answered HTTP ${error.code}. Try again in a while."
-        is UnreadableResponseException -> "The forecast came back in a form Tsvima can't read."
+    fun forecast(error: Throwable): String = when {
+        error.isOffline() -> "Couldn't reach the forecast. Check the phone is online, then retry."
+        error is HttpStatusException -> "The forecast service answered HTTP ${error.code}. Try again in a while."
+        error is UnreadableResponseException -> "The forecast came back in a form Tsvima can't read."
         else -> "Couldn't load the forecast."
     }
+
+    fun search(error: Throwable): String = when {
+        error.isOffline() -> "Couldn't reach the city search. Check the phone is online."
+        error is HttpStatusException -> "The city search answered HTTP ${error.code}. Try again in a while."
+        else -> "Couldn't search for that city."
+    }
+
+    /** No route, no DNS, or the call timed out: OkHttp's timeouts are InterruptedIOExceptions. */
+    private fun Throwable.isOffline() =
+        this is UnknownHostException || this is ConnectException || this is InterruptedIOException
 }

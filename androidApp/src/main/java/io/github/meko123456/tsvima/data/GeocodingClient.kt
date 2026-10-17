@@ -1,6 +1,5 @@
 package io.github.meko123456.tsvima.data
 
-import java.io.IOException
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -24,8 +23,8 @@ class GeocodingClient(
                 .build()
             val request = Request.Builder().url(url).header("User-Agent", "Tsvima/0.1").build()
             client.newCall(request).execute().use { response ->
-                if (!response.isSuccessful) throw IOException("HTTP ${response.code}")
-                val body = response.body?.string() ?: throw IOException("Empty response")
+                if (!response.isSuccessful) throw HttpStatusException(response.code)
+                val body = response.body?.string() ?: throw UnreadableResponseException()
                 GeocodingParser.parse(body)
             }
         }

@@ -60,6 +60,10 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
     var searchResults by mutableStateOf<List<Place>>(emptyList())
         private set
 
+    /** Said in place of results when a search found nothing or failed; null otherwise. */
+    var searchMessage by mutableStateOf<String?>(null)
+        private set
+
     private var last: Triple<Double, Double, String>? = null
 
     /** True once a place is loaded. Survives a rotation, which the activity does not. */
@@ -81,12 +85,24 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
         if (query.isBlank()) return
         viewModelScope.launch {
             searching = true
-            searchResults = geocoder.search(query).getOrDefault(emptyList())
+            searchMessage = null
+            geocoder.search(query)
+                .onSuccess { found ->
+                    searchResults = found
+                    if (found.isEmpty()) searchMessage = "No city matches “${query.trim()}”."
+                }
+                .onFailure { error ->
+                    searchResults = emptyList()
+                    searchMessage = OpenMeteoFailure.search(error)
+                }
             searching = false
         }
     }
 
-    fun clearSearch() { searchResults = emptyList() }
+    fun clearSearch() {
+        searchResults = emptyList()
+        searchMessage = null
+    }
 
     fun pickPlace(place: Place) {
         clearSearch()

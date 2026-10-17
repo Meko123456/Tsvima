@@ -25,4 +25,17 @@ class OpenMeteoFailureTest {
         assertEquals("The forecast came back in a form Tsvima can't read.", OpenMeteoFailure.forecast(UnreadableResponseException()))
         assertEquals("Couldn't load the forecast.", OpenMeteoFailure.forecast(IllegalStateException("anything else")))
     }
+
+    @Test
+    fun aFailedSearchSaysWhyInItsOwnWords() {
+        assertEquals(
+            "Couldn't reach the city search. Check the phone is online.",
+            OpenMeteoFailure.search(UnknownHostException("Unable to resolve host \"geocoding-api.open-meteo.com\"")),
+        )
+        assertEquals(
+            "The city search answered HTTP 429. Try again in a while.",
+            OpenMeteoFailure.search(HttpStatusException(429)),
+        )
+        assertEquals("Couldn't search for that city.", OpenMeteoFailure.search(UnreadableResponseException()))
+    }
 }
