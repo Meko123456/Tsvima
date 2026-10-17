@@ -14,6 +14,7 @@ import io.github.meko123456.tsvima.data.GeocodingClient
 import io.github.meko123456.tsvima.data.GoOutScore
 import io.github.meko123456.tsvima.data.HourlyPoint
 import io.github.meko123456.tsvima.data.OpenMeteoClient
+import io.github.meko123456.tsvima.data.OpenMeteoFailure
 import io.github.meko123456.tsvima.data.Place
 import io.github.meko123456.tsvima.data.Upcoming
 import java.time.Instant
@@ -104,7 +105,7 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
                     _state.value = if (cached != null) {
                         ready(cached.place, cached.forecast, stale = true, asOf = clock(cached.savedAtEpochMs))
                     } else {
-                        HomeUi.Error(error.message ?: "Couldn't load the forecast")
+                        HomeUi.Error(OpenMeteoFailure.forecast(error))
                     }
                 }
             onDone()
