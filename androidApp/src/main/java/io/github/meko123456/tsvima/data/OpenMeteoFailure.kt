@@ -16,12 +16,13 @@ class UnreadableResponseException : IOException("Unexpected response format")
  * exception's own message (offline, the resolver's "Unable to resolve host …").
  */
 object OpenMeteoFailure {
+    /** The words are shared with iOS ([ForecastFailure]); only reading the exception is Android's. */
     fun forecast(error: Throwable): String = when {
-        error.isOffline() -> "Couldn't reach the forecast. Check the phone is online, then retry."
-        error is HttpStatusException -> "The forecast service answered HTTP ${error.code}. Try again in a while."
-        error is UnreadableResponseException -> "The forecast came back in a form Tsvima can't read."
-        else -> "Couldn't load the forecast."
-    }
+        error.isOffline() -> ForecastFailure.Offline
+        error is HttpStatusException -> ForecastFailure.HttpStatus(error.code)
+        error is UnreadableResponseException -> ForecastFailure.Unreadable
+        else -> ForecastFailure.Other
+    }.describe()
 
     fun search(error: Throwable): String = when {
         error.isOffline() -> "Couldn't reach the city search. Check the phone is online."

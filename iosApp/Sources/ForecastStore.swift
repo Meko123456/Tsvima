@@ -73,16 +73,16 @@ final class ForecastStore: ObservableObject {
             // and starts another. Whatever this one came back with belongs to the previous place.
             guard !Task.isCancelled else { return }
             if let http = response as? HTTPURLResponse, !(200..<300).contains(http.statusCode) {
-                state = .failed("Open-Meteo returned HTTP \(http.statusCode).")
+                state = .failed(ForecastFailureHttpStatus(code: Int32(http.statusCode)).describe())
                 return
             }
             guard let body = String(data: data, encoding: .utf8) else {
-                state = .failed("The response was not text.")
+                state = .failed(ForecastFailureUnreadable.shared.describe())
                 return
             }
             // The one line this whole app exists to prove: a native fetch, parsed by shared Kotlin.
             guard let forecast = ForecastParser.shared.parse(body: body) else {
-                state = .failed("Unexpected forecast format.")
+                state = .failed(ForecastFailureUnreadable.shared.describe())
                 return
             }
             // The hour filter is the location's-clock rule, not this device's — see `Upcoming`.
@@ -106,7 +106,22 @@ final class ForecastStore: ObservableObject {
             // new place's load has already set .loading, and would leave an error on screen that
             // nothing is coming to clear.
             guard !Task.isCancelled else { return }
-            state = .failed(error.localizedDescription)
+            state = .failed(Self.failure(for: error).describe())
+        }
+    }
+
+    /// Which failure a URLSession error is. In words, through the shared ForecastFailure, so the two
+    /// apps say the same thing: this used to show each error's own description ("The request timed
+    /// out.") and the response's in Tsvima's ("Open-Meteo returned HTTP 503.", "Unexpected forecast
+    /// format."), while Android said what to do about it.
+    private static func failure(for error: Error) -> ForecastFailure {
+        guard let urlError = error as? URLError else { return ForecastFailureOther.shared }
+        switch urlError.code {
+        case .notConnectedToInternet, .networkConnectionLost, .cannotFindHost, .cannotConnectToHost,
+             .dnsLookupFailed, .timedOut, .dataNotAllowed, .internationalRoamingOff:
+            return ForecastFailureOffline.shared
+        default:
+            return ForecastFailureOther.shared
         }
     }
 
