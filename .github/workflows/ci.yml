@@ -96,18 +96,29 @@ jobs:
         working-directory: iosApp
         run: xcodegen generate
 
-      # A generic simulator destination rather than a named device: runner images change which
-      # simulators they carry, and a hardcoded "iPhone 16" turns an image update into a red build
-      # for no reason.
+      # Whichever iPhone simulator the runner has, rather than a named device: runner images change
+      # which simulators they carry, and a hardcoded "iPhone 16" turns an image update into a red
+      # build for no reason.
+      - name: Pick a simulator
+        id: sim
+        run: |
+          UDID=$(xcrun simctl list devices available --json \
+            | python3 -c "import json,sys; d=json.load(sys.stdin)['devices']; print(next(x['udid'] for k in d for x in d[k] if 'iPhone' in x['name']))")
+          echo "udid=$UDID" >> "$GITHUB_OUTPUT"
+          echo "using $UDID"
+
+      # `test`, not `build`: the unit tests answer the forecast request with each failure in turn
+      # (no connection, a timeout, HTTP 503, a body that won't parse) and check the sentence the
+      # screen shows. Those branches otherwise only run when the network really fails.
       #
       # Building the Shared framework is a pre-build step of the Xcode target, so this also proves
       # the Gradle and Xcode halves still agree about where that framework lands.
-      - name: Build the iOS app
+      - name: Build and test the iOS app
         working-directory: iosApp
         run: |
-          xcodebuild -project Tsvima.xcodeproj -scheme Tsvima \
-                     -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
-                     -configuration Debug build
+          xcodebuild test -project Tsvima.xcodeproj -scheme Tsvima \
+                     -sdk iphonesimulator -destination "id=${{ steps.sim.outputs.udid }}" \
+                     -configuration Debug
 
   release-launches:
     # Building the release proves R8 ran, not that the result starts. On 30 September 2026 three

@@ -39,3 +39,35 @@ targets:
           cd "$SRCROOT/.."
           export JAVA_HOME="${JAVA_HOME:-/Applications/Android Studio.app/Contents/jbr/Contents/Home}"
           ./gradlew :shared:embedAndSignAppleFrameworkForXcode
+
+  TsvimaTests:
+    # Unit tests hosted in the app, so they reach ForecastStore through @testable import.
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - Tests
+    dependencies:
+      - target: Tsvima
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: io.github.meko123456.tsvima.tests
+        # Without this the bundle has no Info.plist and signing fails with a message that blames
+        # the signature rather than the missing plist.
+        GENERATE_INFOPLIST_FILE: YES
+        SWIFT_VERSION: "5.0"
+        EXCLUDED_ARCHS[sdk=iphonesimulator*]: x86_64
+        FRAMEWORK_SEARCH_PATHS:
+          - $(inherited)
+          - $(SRCROOT)/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)
+schemes:
+  Tsvima:
+    build:
+      targets:
+        Tsvima: all
+        TsvimaTests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - TsvimaTests

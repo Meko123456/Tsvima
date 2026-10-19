@@ -50,11 +50,17 @@ final class ForecastStore: ObservableObject {
     @Published var placeIndex: Int = 0
     @Published private(set) var state: State = .loading
 
-    private let session: URLSession = {
-        let config = URLSessionConfiguration.default
-        config.timeoutIntervalForRequest = 20
-        return URLSession(configuration: config)
-    }()
+    private let session: URLSession
+
+    /// `session` is a parameter so the tests can answer with a failure of their choosing instead of
+    /// Open-Meteo's: each one's sentence is otherwise only seen when the network actually fails.
+    init(session: URLSession? = nil) {
+        self.session = session ?? {
+            let config = URLSessionConfiguration.default
+            config.timeoutIntervalForRequest = 20
+            return URLSession(configuration: config)
+        }()
+    }
 
     func load() async {
         let place = places[placeIndex]
