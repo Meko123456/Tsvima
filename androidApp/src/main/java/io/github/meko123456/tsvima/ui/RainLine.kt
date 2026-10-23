@@ -31,8 +31,7 @@ internal fun nextRainLine(upcoming: List<HourlyPoint>, is24Hour: Boolean): Strin
     // And say which day. The first wet hour is often tomorrow's, and "around 00:00" read at
     // lunchtime looks like an hour already gone — the timeline rows below have a column to mark
     // the crossing, this line does not.
-    val sameDay = upcoming.firstOrNull()?.time?.take(10) == rain.time.take(10)
-    val at = if (sameDay) hourLabel(rain.time, is24Hour) else "tomorrow ${hourLabel(rain.time, is24Hour)}"
+    val at = if (onTheFirstDay(upcoming, rain)) hourLabel(rain.time, is24Hour) else "tomorrow ${hourLabel(rain.time, is24Hour)}"
     // An hour can be wet by either of two forecasts. Open-Meteo's chance of rain and its amount come
     // from different models and can disagree, as with 0.5 mm at 0% for Tbilisi in October 2026.
     // Either is enough to call the hour wet, but the line has to cite the one that said so:
@@ -43,3 +42,18 @@ internal fun nextRainLine(upcoming: List<HourlyPoint>, is24Hour: Boolean): Strin
         "Rain possible around $at (${String.format(Locale.ROOT, "%.1f", rain.precipMm)} mm)"
     }
 }
+
+/**
+ * The widget's shorter line: "Rain ~14:00", or "Rain tomorrow ~2:00 PM". Same two jobs as
+ * [nextRainLine]: read the way the phone's clock does, and say when the hour is tomorrow's, since
+ * "~00:00" seen at lunchtime looks like an hour already gone.
+ */
+internal fun widgetRainLine(upcoming: List<HourlyPoint>, is24Hour: Boolean): String {
+    val rain = Upcoming.nextRain(upcoming) ?: return "No rain soon ☀️"
+    val hour = hourLabel(rain.time, is24Hour)
+    return if (onTheFirstDay(upcoming, rain)) "Rain ~$hour" else "Rain tomorrow ~$hour"
+}
+
+/** Whether [rain] falls on the same date as the first upcoming hour, the one you are in. */
+private fun onTheFirstDay(upcoming: List<HourlyPoint>, rain: HourlyPoint): Boolean =
+    upcoming.firstOrNull()?.time?.take(10) == rain.time.take(10)

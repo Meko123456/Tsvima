@@ -2,6 +2,7 @@ package io.github.meko123456.tsvima.widget
 
 import android.content.Context
 import android.content.Intent
+import android.text.format.DateFormat
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.glance.GlanceId
@@ -22,7 +23,7 @@ import io.github.meko123456.tsvima.MainActivity
 import io.github.meko123456.tsvima.data.ForecastCache
 import io.github.meko123456.tsvima.data.GoOutScore
 import io.github.meko123456.tsvima.data.Upcoming
-import java.time.LocalDateTime
+import io.github.meko123456.tsvima.ui.widgetRainLine
 
 /** Home-screen widget: the last cached go-out score + next-rain line, at a glance. */
 class RainWidget : GlanceAppWidget() {
@@ -35,8 +36,7 @@ class RainWidget : GlanceAppWidget() {
             val upcoming = Upcoming.hoursAheadNow(cached.forecast.hourly, cached.forecast.utcOffsetSeconds)
             place = cached.place
             scoreText = GoOutScore.score(upcoming).toString()
-            val next = Upcoming.nextRain(upcoming)
-            rain = if (next == null) "No rain soon ☀️" else "Rain ~${next.time.takeLast(5)}"
+            rain = widgetRainLine(upcoming, DateFormat.is24HourFormat(context))
         } else {
             place = "Tsvima"
             scoreText = "—"

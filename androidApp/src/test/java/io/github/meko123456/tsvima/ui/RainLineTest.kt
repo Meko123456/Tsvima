@@ -93,4 +93,24 @@ class RainLineTest {
             Locale.setDefault(before)
         }
     }
+
+    @Test
+    fun theWidgetSaysWhenRainIsTomorrows() {
+        // It used to print the stamp's last five characters: "Rain ~00:00" at lunchtime.
+        val upcoming = listOf(hour("2026-09-21T12:00"), hour("2026-09-22T00:00", prob = 58))
+        assertEquals("Rain tomorrow ~00:00", widgetRainLine(upcoming, is24Hour = true))
+        assertEquals("Rain ~14:00", widgetRainLine(listOf(hour("2026-09-21T14:00", prob = 70)), is24Hour = true))
+        assertEquals("No rain soon ☀️", widgetRainLine(listOf(hour("2026-09-21T14:00")), is24Hour = true))
+    }
+
+    @Test
+    fun theWidgetFollowsATwelveHourClockToo() {
+        val before = Locale.getDefault()
+        Locale.setDefault(Locale.US)
+        try {
+            assertEquals("Rain ~2:00 PM", widgetRainLine(listOf(hour("2026-09-21T14:00", prob = 70)), is24Hour = false))
+        } finally {
+            Locale.setDefault(before)
+        }
+    }
 }
