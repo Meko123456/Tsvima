@@ -37,6 +37,55 @@ class ForecastParserTest {
         assertEquals(9.2, second.windKmh, 0.001)
     }
 
+    // Berlin asked on a Saturday. Open-Meteo stamps Sunday at summer time too (+2), though the clocks
+    // go back to +1 at 03:00 that night.
+    private val berlinAcrossTheChange = """
+        {"latitude":52.52,"longitude":13.41,"utc_offset_seconds":7200,"timezone":"Europe/Berlin",
+         "hourly":{"time":["2026-10-25T01:00","2026-10-25T02:00","2026-10-25T03:00","2026-10-25T04:00","2026-10-25T14:00"]}}
+    """.trimIndent()
+
+    @Test
+    fun hoursPastAClockChangeReadTheWayThePlacesClocksWill() {
+        val hours = ForecastParser.parse(berlinAcrossTheChange)!!.hourly
+        assertEquals(
+            listOf("2026-10-25T01:00", "2026-10-25T02:00", "2026-10-25T02:00", "2026-10-25T03:00", "2026-10-25T13:00"),
+            hours.map { it.time },
+        )
+    }
+
+    @Test
+    fun everyHourKeepsTheInstantItStarts() {
+        val hours = ForecastParser.parse(berlinAcrossTheChange)!!.hourly
+        // 2026-10-24T23:00Z, then an hour apart however the labels repeat; 14:00 sent is 12:00Z.
+        assertEquals(
+            listOf(1_792_882_800L, 1_792_886_400L, 1_792_890_000L, 1_792_893_600L, 1_792_929_600L),
+            hours.map { it.epochSeconds },
+        )
+    }
+
+    @Test
+    fun withoutAZoneNameTheStampsStayAsSent() {
+        val noZone = """{"latitude":0,"longitude":0,"utc_offset_seconds":7200,"hourly":{"time":["2026-10-25T14:00"]}}"""
+        val p = ForecastParser.parse(noZone)!!.hourly.single()
+        assertEquals("2026-10-25T14:00", p.time)
+        assertEquals(1_792_929_600L, p.epochSeconds)
+    }
+
+    @Test
+    fun anUnknownZoneKeepsTheStampsAsSent() {
+        val badZone = """
+            {"latitude":0,"longitude":0,"utc_offset_seconds":7200,"timezone":"Mars/Olympus_Mons","hourly":{"time":["2026-10-25T14:00"]}}
+        """.trimIndent()
+        assertEquals("2026-10-25T14:00", ForecastParser.parse(badZone)!!.hourly.single().time)
+    }
+
+    @Test
+    fun withoutAnOffsetAnHourHasNoInstant() {
+        val p = ForecastParser.parse(sample)!!.hourly[1]
+        assertEquals("2026-08-20T01:00", p.time)
+        assertNull(p.epochSeconds)
+    }
+
     @Test
     fun clampsProbabilityIntoRange() {
         val weird = """

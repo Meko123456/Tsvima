@@ -13,8 +13,8 @@ import kotlin.test.assertTrue
  */
 class UpcomingTest {
 
-    private fun hour(time: String, prob: Int = 0, mm: Double = 0.0) =
-        HourlyPoint(time = time, precipProbability = prob, precipMm = mm, tempC = 18.0, windKmh = 5.0)
+    private fun hour(time: String, prob: Int = 0, mm: Double = 0.0, startsAt: Long? = null) =
+        HourlyPoint(time = time, precipProbability = prob, precipMm = mm, tempC = 18.0, windKmh = 5.0, epochSeconds = startsAt)
 
     private val hours = listOf(
         hour("2026-08-20T10:00"),
@@ -122,11 +122,32 @@ class UpcomingTest {
     @Test
     fun hoursAheadIsTheTwoStepsTheAppsActuallyCall() {
         // The public entry point. Both apps call this and never see a LocalDateTime; if it ever
-        // stops agreeing with the pair it composes, every timezone case above proves nothing.
+        // stops agreeing with the pair it composes, every timezone case above proves nothing. These
+        // hours carry no instant, as in a forecast cached before they did, so this is that path.
         assertEquals(
             Upcoming.fromNow(hours, Upcoming.localNow(london, halfPastEight, tbilisi)),
             Upcoming.hoursAhead(hours, halfPastEight, utcOffsetSeconds = london, deviceOffsetSeconds = tbilisi),
         )
+    }
+
+    @Test
+    fun onTheNightTheClocksGoBackTheSecondTwoOClockIsTheOneYouAreIn() {
+        // Berlin, 25 October 2026: 02:00 comes at 00:00Z and again at 01:00Z. At 01:30Z the first
+        // one is over, though both read 02:00, and a wall-clock comparison kept it.
+        val night = listOf(
+            hour("2026-10-25T02:00", startsAt = 1_792_886_400L),
+            hour("2026-10-25T02:00", startsAt = 1_792_890_000L),
+            hour("2026-10-25T03:00", startsAt = 1_792_893_600L),
+        )
+        val upcoming = Upcoming.hoursAhead(night, nowEpochSeconds = 1_792_891_800L, utcOffsetSeconds = 3600, deviceOffsetSeconds = tbilisi)
+        assertEquals(listOf(1_792_890_000L, 1_792_893_600L), upcoming.map { it.epochSeconds })
+    }
+
+    @Test
+    fun anHourThatHasJustEndedIsGone() {
+        val hours = listOf(hour("2026-10-25T13:00", startsAt = 1_792_929_600L), hour("2026-10-25T14:00", startsAt = 1_792_933_200L))
+        val upcoming = Upcoming.hoursAhead(hours, nowEpochSeconds = 1_792_933_200L, utcOffsetSeconds = 3600, deviceOffsetSeconds = tbilisi)
+        assertEquals(listOf("2026-10-25T14:00"), upcoming.map { it.time })
     }
 
     @Test

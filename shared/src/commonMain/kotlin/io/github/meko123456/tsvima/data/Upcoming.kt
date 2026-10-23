@@ -30,6 +30,8 @@ object Upcoming {
     /** Millimetres at or above which an hour reads as rain, whatever the probability says. */
     const val RAIN_MILLIMETRES: Double = 0.2
 
+    private const val SECONDS_PER_HOUR = 3600L
+
     /**
      * Hours at or after the current hour **at the forecast location**, read at [nowEpochSeconds].
      *
@@ -52,7 +54,14 @@ object Upcoming {
         nowEpochSeconds: Long,
         utcOffsetSeconds: Int?,
         deviceOffsetSeconds: Int,
-    ): List<HourlyPoint> = fromNow(hourly, localNow(utcOffsetSeconds, nowEpochSeconds, deviceOffsetSeconds))
+    ): List<HourlyPoint> =
+        if (hourly.isNotEmpty() && hourly.all { it.epochSeconds != null }) {
+            // Hours that know their instant need no clock at all: the hour you are in is the one
+            // that hasn't ended. That stays right on the night 02:00 happens twice.
+            hourly.filter { it.epochSeconds!! + SECONDS_PER_HOUR > nowEpochSeconds }
+        } else {
+            fromNow(hourly, localNow(utcOffsetSeconds, nowEpochSeconds, deviceOffsetSeconds))
+        }
 
     /**
      * [hoursAhead] against the system clock and this device's current offset.

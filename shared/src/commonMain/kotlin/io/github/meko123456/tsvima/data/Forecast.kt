@@ -10,6 +10,12 @@ data class HourlyPoint(
     val precipMm: Double,        // millimetres in that hour
     val tempC: Double,
     val windKmh: Double,
+    /**
+     * When the hour starts, in seconds since the epoch. The clock-free way to ask whether it has
+     * passed: on the night the clocks go back, [time] says 02:00 twice. Null in a forecast cached
+     * before this existed.
+     */
+    val epochSeconds: Long? = null,
 )
 
 /** A parsed forecast for one place: its coordinates and an hourly timeline. */
