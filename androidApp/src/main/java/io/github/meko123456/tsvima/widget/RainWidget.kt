@@ -7,6 +7,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
+import androidx.glance.GlanceTheme
+import androidx.glance.appwidget.appWidgetBackground
+import androidx.glance.appwidget.cornerRadius
+import androidx.glance.background
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
@@ -44,15 +48,25 @@ class RainWidget : GlanceAppWidget() {
         }
 
         provideContent {
-            Column(
-                modifier = GlanceModifier.fillMaxSize().padding(12.dp)
-                    .clickable(actionStartActivity(Intent(context, MainActivity::class.java))),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Text(place, style = TextStyle(fontSize = 13.sp, fontWeight = FontWeight.Medium))
-                Text(scoreText, style = TextStyle(fontSize = 34.sp, fontWeight = FontWeight.Bold))
-                Text(rain, style = TextStyle(fontSize = 12.sp))
+            GlanceTheme {
+                // Glance draws nothing behind a widget unless asked, and its text is a flat black:
+                // over a dark wallpaper, or the dark half of one, the score all but disappeared.
+                // The theme's widget background and ink follow the wallpaper and dark mode.
+                val ink = GlanceTheme.colors.onSurface
+                Column(
+                    modifier = GlanceModifier.fillMaxSize()
+                        .appWidgetBackground()
+                        .background(GlanceTheme.colors.widgetBackground)
+                        .cornerRadius(android.R.dimen.system_app_widget_background_radius)
+                        .padding(12.dp)
+                        .clickable(actionStartActivity(Intent(context, MainActivity::class.java))),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Text(place, style = TextStyle(fontSize = 13.sp, fontWeight = FontWeight.Medium, color = ink))
+                    Text(scoreText, style = TextStyle(fontSize = 34.sp, fontWeight = FontWeight.Bold, color = ink))
+                    Text(rain, style = TextStyle(fontSize = 12.sp, color = ink))
+                }
             }
         }
     }
