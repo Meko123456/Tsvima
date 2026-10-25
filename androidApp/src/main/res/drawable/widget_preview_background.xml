@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Only the fallback a resource needs; drawable-v31 is the one the picker draws. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/widget_preview_background" />
+    <corners android:radius="16dp" />
+</shape>

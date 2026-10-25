@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- For the widget picker's preview layout (layout/rain_widget_preview.xml). The picker
+         reads a previewLayout from Android 12 on, where values-v31 swaps these for the wallpaper
+         colours GlanceTheme draws the widget in; these are only the fallback a resource needs. -->
+    <color name="widget_preview_background">#FFF3EDF7</color>
+    <color name="widget_preview_on_surface">#FF1C1B1F</color>
+</resources>

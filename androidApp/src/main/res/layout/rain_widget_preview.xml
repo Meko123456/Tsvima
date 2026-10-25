@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- What the widget picker shows on Android 12 to 14: the rain card with a made-up forecast,
+     like the one RainWidget.providePreview draws for Android 15 and later, instead of the app
+     icon in a box. Its rain line is the dry one, "No rain soon", which names no hour, so it
+     reads the same on a 12-hour and a 24-hour clock. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_preview_background"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:padding="12dp"
+    tools:ignore="HardcodedText">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="sans-serif-medium"
+        android:text="Tbilisi"
+        android:textColor="@color/widget_preview_on_surface"
+        android:textSize="13sp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="86"
+        android:textColor="@color/widget_preview_on_surface"
+        android:textSize="34sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="No rain soon ☀️"
+        android:textColor="@color/widget_preview_on_surface"
+        android:textSize="12sp" />
+</LinearLayout>
